@@ -57,9 +57,6 @@ cpsw_register_hooks();
 // Register activation hook - this cannot be moved to a function
 register_activation_hook( __FILE__, 'cpsw_activation_hook' );
 
-// Add admin notice
-add_action( 'admin_notices', 'cpsw_admin_notice', 20 );
-
 // Check if the enable_native_paypal option is set to 'yes'
 $plugin = plugin_basename( __FILE__ );
 $settings = get_option('woocommerce_cpsw_paypal_standard_settings', array());
@@ -68,18 +65,18 @@ $migration_complete = 'yes' === get_option( 'cpsw_migration_completed', 'no' );
 
 // Run if native PayPal is enabled OR migration is not complete
 if ($enable_native_paypal || !$migration_complete) {
-  add_action( 'plugins_loaded',function(){
-    // It enable PayPal Standard for WooCommerce.
+  add_action( 'plugins_loaded', function() {
+    // Ensures WooCommerce core PayPal Standard can load when migration or debug options require it.
     $paypal = class_exists( 'WC_Gateway_Paypal' ) ? new WC_Gateway_Paypal() : null;
-    if( $paypal ) {
+    if ( $paypal ) {
       $paypal->update_option( '_should_load', 'yes' );
     }
-    add_filter( 'woocommerce_should_load_paypal_standard','__return_true',9999999999999 );
+    add_filter( 'woocommerce_should_load_paypal_standard', '__return_true', 9999 );
   } );
 } else {
   // Ensure native PayPal is disabled after migration
   add_action( 'plugins_loaded', function() {
-    if (class_exists( 'WC_Gateway_Paypal' )) {
+    if ( class_exists( 'WC_Gateway_Paypal' ) ) {
       $paypal = new WC_Gateway_Paypal();
       $paypal->update_option( '_should_load', 'no' );
     }

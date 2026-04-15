@@ -62,7 +62,7 @@ if ( ! function_exists( 'cpsw_get_settings_for_section' ) ) {
                 'sandbox_email' => array(
                     'title'       => __( 'Sandbox PayPal Email', 'classic-paypal-standard-wc' ),
                     'type'        => 'email',
-                    'description' => sprintf( __( 'Enter the email of your PayPal sandbox account for testing. %s', 'classic-paypal-standard-wc' ), '<a href="https://wpplugin.org/documentation/sandbox-mode/" target="_blank">' . __( 'Learn more about sandbox mode', 'classic-paypal-standard-wc' ) . '</a>' ),
+                    'description' => sprintf( __( 'Enter the email of your PayPal sandbox account for testing. %s', 'classic-paypal-standard-wc' ), '<a href="https://developer.paypal.com/tools/sandbox/" target="_blank" rel="noopener noreferrer">' . __( 'Learn more about sandbox mode', 'classic-paypal-standard-wc' ) . '</a>' ),
                     'default'     => '',
                     'desc_tip'    => __( 'A Sandbox account is used for testing with fake money to make sure things are working correctly. Enter the email of your PayPal sandbox account for testing.', 'classic-paypal-standard-wc' ),
                     //'placeholder' => 'sandbox@example.com',
@@ -171,7 +171,7 @@ if ( ! function_exists( 'cpsw_get_settings_for_section' ) ) {
                     'type'        => 'checkbox',
                     'label'       => __( 'Enable address override', 'classic-paypal-standard-wc' ),
                     'default'     => 'no',
-                    'description' => __( 'Should the shipping address entered by the customer durning checkout be used instead of the PayPal address? (We recommend keeping it disabled to avoid errors).', 'classic-paypal-standard-wc' ),
+                    'description' => __( 'Should the shipping address entered by the customer during checkout be used instead of the PayPal address? (We recommend keeping it disabled to avoid errors).', 'classic-paypal-standard-wc' ),
                     'desc_tip'    => __( 'address_override is a parameter sent to PayPal during checkout that controls whether the shipping address from your WooCommerce checkout overrides the customer\'s PayPal-stored address. This is useful for strict shipping control and fraud prevention but it comes at the cost of more errors since the customer cannot change their address at PayPal checkout. We recommend you keep this turned off.', 'classic-paypal-standard-wc' ),
                 ),
                 'image_url' => array(
@@ -185,7 +185,7 @@ if ( ! function_exists( 'cpsw_get_settings_for_section' ) ) {
                 'api_credentials_title' => array(
                     'title'       => __( 'API Credentials', 'classic-paypal-standard-wc' ),
                     'type'        => 'title',
-                    'description' => sprintf( __( 'Enter your PayPal API credentials to process refunds via PayPal. Learn how to access your %s.', 'classic-paypal-standard-wc' ), '<a href="https://wpplugin.org/documentation/how-to-request-paypal-api-signature-credentials/" target="_blank" rel="noopener noreferrer">' . __( 'PayPal API Credentials', 'classic-paypal-standard-wc' ) . '</a>' ),
+                    'description' => sprintf( __( 'Enter your PayPal API credentials to process refunds via PayPal. Learn how to access your %s.', 'classic-paypal-standard-wc' ), '<a href="https://developer.paypal.com/api/nvp-soap/PayPalAPIOverview/" target="_blank" rel="noopener noreferrer">' . __( 'PayPal API Credentials', 'classic-paypal-standard-wc' ) . '</a>' ),
                     'class'       => 'cpsw-section-title',
                 ),
                 'api_username' => array(
@@ -262,7 +262,7 @@ if ( ! function_exists( 'cpsw_get_settings_for_section' ) ) {
                     'type'        => 'checkbox',
                     'label'       => __( 'Enable native PayPal Standard', 'classic-paypal-standard-wc' ),
                     'default'     => 'no',
-                    'description' => __( 'DISCLAIMER: WooCommerce may remove this feature at any time. This option should not be used long-term as it relies on native code that might be removed in future WooCommerce updates. This option will display the native PayPal Standard gateway in the WooCommerce payment methods list, so you can configure it as you normally would. You may wish to also disable this gateway if you are having issues. <a href="https://wordpress.org/support/plugin/classic-paypal-standard-wc/" target="_blank">Please let us know</a> if you experience any issues so we can fix it for you.</a>', 'classic-paypal-standard-wc' ),
+                    'description' => __( 'DISCLAIMER: WooCommerce may remove this feature at any time. This option should not be used long-term as it relies on native code that might be removed in future WooCommerce updates. This option will display the native PayPal Standard gateway in the WooCommerce payment methods list, so you can configure it as you normally would. You may wish to also disable this gateway if you are having issues.', 'classic-paypal-standard-wc' ) . ' <a href="https://github.com/sarwarz/classic-paypal-standard-wc/issues" target="_blank" rel="noopener noreferrer">' . __( 'Please let us know', 'classic-paypal-standard-wc' ) . '</a> ' . __( 'if you experience any issues.', 'classic-paypal-standard-wc' ),
                 ),
                 'view_logs' => array(
                     'title'       => __( 'View Debug Logs', 'classic-paypal-standard-wc' ),
@@ -281,7 +281,7 @@ if ( ! function_exists( 'cpsw_get_settings_for_section' ) ) {
 }
 
 // If section parameter is provided, return that section's settings
-$section = isset($_GET['section']) ? sanitize_text_field($_GET['section']) : 'general';
-$section = isset($_GET['sub_section']) ? sanitize_text_field($_GET['sub_section']) : $section; // For backward compatibility
+$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : 'general';
+$section = isset( $_GET['sub_section'] ) ? sanitize_text_field( wp_unslash( $_GET['sub_section'] ) ) : $section; // For backward compatibility
 
 return cpsw_get_settings_for_section($section); 

@@ -225,8 +225,8 @@ function cpsw_debug_log($message) {
         $cpsw_debug_enabled = isset($settings['debug_enabled']) ? ($settings['debug_enabled'] === 'yes') : false;
     }
     
-    // Only log if debugging is explicitly enabled in settings OR WP_DEBUG is enabled
-    if ($cpsw_debug_enabled || (defined('WP_DEBUG') && WP_DEBUG)) {
+    // Only log when gateway "Log debug messages" is enabled (avoids noisy logs from WP_DEBUG alone).
+    if ( $cpsw_debug_enabled ) {
         // Use WC logger if available
         if (function_exists('wc_get_logger')) {
             $logger = wc_get_logger();
@@ -272,8 +272,8 @@ function cpsw_register_hooks() {
     // Initialize the plugin - use a higher priority to ensure WooCommerce is loaded first
     add_action( 'plugins_loaded', 'woo_paypal_standard_init', 20 );
     
-    // Add admin notice
-    add_action( 'admin_notices', 'cpsw_admin_notice' );
+    // Add admin notice (after other notices such as migration).
+    add_action( 'admin_notices', 'cpsw_admin_notice', 20 );
     
     // Filter payment gateways during migration
     add_filter( 'woocommerce_payment_gateways', 'cpsw_filter_payment_gateways', 30 );
@@ -313,10 +313,14 @@ function cpsw_filter_payment_gateways( $gateways ) {
         );
         
         // Filter out our PayPal gateway
-        $gateways = array_filter($gateways, function($gateway) use ($our_paypal_gateways) {
-            // Return false to filter out our PayPal gateway, true to keep other gateways
-            return !in_array($gateway, $our_paypal_gateways);
-        });
+        $gateways = array_values(
+            array_filter(
+                $gateways,
+                function ( $gateway ) use ( $our_paypal_gateways ) {
+                    return ! in_array( $gateway, $our_paypal_gateways, true );
+                }
+            )
+        );
         
         cpsw_debug_log('cpsw: Hiding our gateway until migration is completed');
         cpsw_debug_log('cpsw: Remaining gateways after filter: ' . count($gateways));
@@ -327,10 +331,14 @@ function cpsw_filter_payment_gateways( $gateways ) {
         $native_paypal_gateway = 'WC_Gateway_Paypal';
         
         // Filter out the native PayPal gateway
-        $gateways = array_filter($gateways, function($gateway) use ($native_paypal_gateway) {
-            // Return false to filter out native PayPal gateway, true to keep other gateways
-            return $gateway !== $native_paypal_gateway;
-        });
+        $gateways = array_values(
+            array_filter(
+                $gateways,
+                function ( $gateway ) use ( $native_paypal_gateway ) {
+                    return $gateway !== $native_paypal_gateway;
+                }
+            )
+        );
         
         cpsw_debug_log('cpsw: Hiding native WooCommerce PayPal gateway after migration');
         cpsw_debug_log('cpsw: Remaining gateways after filter: ' . count($gateways));

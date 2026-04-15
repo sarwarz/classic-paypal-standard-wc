@@ -28,7 +28,6 @@
             if (!modeSelector.length) return; // Exit if mode selector isn't on this page
             
             var currentMode = modeSelector.val();
-            console.log('PayPal Standard: Current mode:', currentMode);
             
             // Get all form rows and settings wrapper
             var allRows = modeSelector.closest('form').find('tr');
@@ -101,7 +100,7 @@
                         }
                         
                         // Add sandbox help link if it doesn't exist - use translated text from PHP
-                        var sandboxHelpLink = '<div class="cpsw-sandbox-help"><a href="https://wpplugin.org/documentation/sandbox-mode/" target="_blank" rel="noopener noreferrer">' + translatedStrings.sandboxHelpLinkText + '</a></div>';
+                        var sandboxHelpLink = '<div class="cpsw-sandbox-help"><a href="https://developer.paypal.com/tools/sandbox/" target="_blank" rel="noopener noreferrer">' + translatedStrings.sandboxHelpLinkText + '</a></div>';
                         var modeRow = modeSelector.closest('tr');
                         
                         if (modeRow.length && modeRow.find('.cpsw-sandbox-help').length === 0) {
@@ -171,7 +170,6 @@
                 
                 // Run when mode is changed
                 $(document).on('change', getFieldId('testmode'), function() {
-                    console.log('PayPal Standard: Mode changed to', $(this).val());
                     toggleFields();
                 });
             }

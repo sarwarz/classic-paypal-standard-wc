@@ -143,7 +143,7 @@ class cpsw_Gateway_PayPal_Standard extends WC_Payment_Gateway {
         
         // Add sandbox messaging if in test mode
         if ( $this->testmode ) {
-            $this->description .= '<br><br>' . sprintf( __( 'SANDBOX ENABLED. You can use sandbox testing accounts only. See the %s for more details.', 'classic-paypal-standard-wc' ), '<a target="_blank" href="https://wpplugin.org/documentation/sandbox-mode/">' . __( 'PayPal Sandbox Testing Guide', 'classic-paypal-standard-wc' ) . '</a>' );
+            $this->description .= '<br><br>' . sprintf( __( 'SANDBOX ENABLED. You can use sandbox testing accounts only. See the %s for more details.', 'classic-paypal-standard-wc' ), '<a target="_blank" rel="noopener noreferrer" href="https://developer.paypal.com/tools/sandbox/">' . __( 'PayPal Sandbox Testing Guide', 'classic-paypal-standard-wc' ) . '</a>' );
             $this->description  = trim( $this->description );
         }
 

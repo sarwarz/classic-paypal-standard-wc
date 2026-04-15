@@ -7,15 +7,6 @@
 
 defined( 'ABSPATH' ) || exit;
 
-
-
-
-
-
-
-
-
-
 /**
  * Check if WooCommerce's native PayPal settings exist and the migration has not been completed
  * 
@@ -374,7 +365,7 @@ function cpsw_display_migration_success_notice() {
         <p><strong><?php esc_html_e( 'PayPal Standard settings successfully migrated!', 'classic-paypal-standard-wc' ); ?></strong></p>
         <p><?php esc_html_e( 'Your PayPal Standard settings have been migrated from WooCommerce\'s native integration to Classic PayPal Standard for WooCommerce.', 'classic-paypal-standard-wc' ); ?></p>
         <p><?php esc_html_e( 'WooCommerce\'s native PayPal Standard gateway has been disabled, and this plugin has been enabled with your existing settings.', 'classic-paypal-standard-wc' ); ?></p>
-        <p><b><?php esc_html_e( 'If you experience any issues, please enabled the "Enabled Native PayPal Standard" option in the settings debugging tab and let us know.', 'classic-paypal-standard-wc' ); ?></b></p>
+        <p><b><?php esc_html_e( 'If you experience any issues, please enable the "Enable Native PayPal Standard" option in the settings debugging tab and let us know.', 'classic-paypal-standard-wc' ); ?></b></p>
     </div>
     <?php
     

@@ -64,16 +64,23 @@ class cpsw_Gateway_PayPal_Standard_PDT_Handler extends cpsw_Gateway_PayPal_Stand
 
         $order = wc_get_order( $order_id );
 
-        cpsw_Gateway_PayPal_Standard::log( 'PDT Request: ' . wc_print_r( $_GET, true ) );
+        if ( ! $order ) {
+            cpsw_Gateway_PayPal_Standard::log( 'PDT: invalid or missing order for order_id ' . absint( $order_id ) );
+            return;
+        }
 
-        $transaction_details = $this->get_transaction_details( wc_clean( wp_unslash( $_GET['tx'] ) ) );
+        $tx = isset( $_GET['tx'] ) ? wc_clean( wp_unslash( $_GET['tx'] ) ) : '';
+        cpsw_Gateway_PayPal_Standard::log( 'PDT request for order #' . $order->get_id() . ', tx token: ' . $tx );
+
+        $transaction_details = $this->get_transaction_details( $tx );
 
         if ( ! is_wp_error( $transaction_details ) && ! empty( $transaction_details ) ) {
             $this->validate_transaction_details( $order, $transaction_details );
         } else {
-            // Add a notice if something went wrong.
             $order->add_order_note( __( 'PDT transaction details check failed.', 'classic-paypal-standard-wc' ) );
-            cpsw_Gateway_PayPal_Standard::log( 'PDT check failed: ' . wc_print_r( $transaction_details, true ) );
+            cpsw_Gateway_PayPal_Standard::log(
+                'PDT check failed: ' . ( is_wp_error( $transaction_details ) ? $transaction_details->get_error_message() : wc_print_r( $transaction_details, true ) )
+            );
         }
     }
 
