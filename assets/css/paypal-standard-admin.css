@@ -1,0 +1,106 @@
+/**
+ * PayPal Standard Admin Styles
+ */
+
+/* Add spacing below the subsubsub tabs and above the gateway title */
+ul.subsubsub {
+    margin-bottom: 2.5em;
+}
+
+/* Add spacing between title and tabs */
+h2 + ul.subsubsub {
+    margin-top: 1em;
+}
+
+/* Add space after description before tabs */
+.description + ul.subsubsub {
+    margin-top: 1em;
+}
+
+/* Add extra space above section titles */
+.cpsw-section-title {
+    padding-top: 25px !important;
+}
+
+ul.subsubsub + h2, ul.subsubsub + h3 {
+    display: block;
+    margin-top: 1.5em;
+    clear: both;
+}
+
+/* Tab styling: only minimal margin to match WooCommerce native look */
+.cpsw-settings-tabs {
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+}
+
+/* Remove any custom .nav-tab styles so the native look is preserved */
+
+/* Hide and show fields based on mode using specificity to override WooCommerce styles */
+.cpsw-sandbox-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_email,
+.cpsw-sandbox-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_api_username,
+.cpsw-sandbox-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_api_password,
+.cpsw-sandbox-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_api_signature {
+    display: none !important;
+}
+
+.cpsw-live-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_sandbox_email,
+.cpsw-live-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_sandbox_api_username,
+.cpsw-live-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_sandbox_api_password,
+.cpsw-live-mode.woocommerce-settings-wrap #woocommerce_cpsw_paypal_standard_sandbox_api_signature {
+    display: none !important;
+}
+
+/* Hide the entire rows - note we're adding specific class names to the rows in JS for older browsers */
+.cpsw-sandbox-mode.woocommerce-settings-wrap tr.cpsw-live-field-row {
+    display: none !important;
+}
+
+.cpsw-live-mode.woocommerce-settings-wrap tr.cpsw-sandbox-field-row {
+    display: none !important;
+}
+
+/* Mode-based field styling */
+.cpsw-sandbox-field, .cpsw-live-field {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.cpsw-sandbox-mode .cpsw-live-field,
+.cpsw-live-mode .cpsw-sandbox-field {
+    opacity: 0.5;
+}
+
+/* Sandbox help link */
+.cpsw-sandbox-help {
+    margin-top: 0.5em;
+    font-style: italic;
+}
+
+/* Make the settings form more readable */
+.cpsw-settings-tabs + .form-table th {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.cpsw-settings-tabs + .form-table td {
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+/* Section titles */
+.cpsw-settings-tabs + .form-table h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Fix for Select2 elements */
+.cpsw-settings-tabs + .form-table .select2-container {
+    min-width: 350px;
+}
+
+/* Additional spacing for section titles */
+.form-table tr:first-child th h3 {
+    margin-top: 0;
+}
