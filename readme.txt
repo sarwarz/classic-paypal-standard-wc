@@ -6,7 +6,7 @@ Requires at least: 5.6
 Tested up to: 6.9
 Requires PHP: 5.6
 Requires Plugins: woocommerce
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -55,6 +55,10 @@ If native PayPal Standard settings are still present, an admin notice may offer 
 1. WooCommerce **Payments** settings with Classic PayPal Standard available and configurable.
 
 == Changelog ==
+
+= 1.0.1 =
+* Fix: PayPal sandbox/live `AMOUNT_ERROR` when coupons were used — align cart line math with WooCommerce core (per-item subtotals, rounded discount, consolidated cart fallback when totals do not split cleanly).
+* Fix: Generic single-line PayPal mode no longer sends `discount_amount_cart` alongside an amount already derived from the discounted order total (avoids double-discount in PayPal’s validation).
 
 = 1.0.0 =
 * Fork release: version reset, author metadata updated, deactivation survey / remote tracking removed, PayPal build notation updated.

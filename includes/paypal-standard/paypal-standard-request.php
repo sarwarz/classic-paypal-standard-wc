@@ -54,6 +54,150 @@ class cpsw_Gateway_PayPal_Standard_Request {
     }
 
     /**
+     * Round a price like WooCommerce core PayPal request (currency decimals).
+     *
+     * @param float    $price Price.
+     * @param WC_Order $order Order.
+     * @return float
+     */
+    protected function round( $price, $order ) {
+        $precision = 2;
+        if ( in_array( $order->get_currency(), array( 'HUF', 'JPY', 'TWD' ), true ) ) {
+            $precision = 0;
+        }
+        if ( class_exists( '\Automattic\WooCommerce\Utilities\NumberUtil' ) ) {
+            return \Automattic\WooCommerce\Utilities\NumberUtil::round( (float) $price, $precision );
+        }
+        return round( (float) $price, $precision );
+    }
+
+    /**
+     * Whether cart line math matches the order total (same check as WC_Gateway_Paypal_Request::line_items_valid).
+     *
+     * @param WC_Order $order Order.
+     * @return bool
+     */
+    protected function line_items_valid( $order ) {
+        $negative_item_amount = false;
+        $calculated_total      = 0;
+
+        foreach ( $order->get_items( array( 'line_item', 'fee' ) ) as $item ) {
+            if ( 'fee' === $item->get_type() ) {
+                $item_line_total   = $this->number_format( $item->get_total(), $order );
+                $calculated_total += (float) $item_line_total;
+            } else {
+                $item_line_total   = $this->number_format( $order->get_item_subtotal( $item, false ), $order );
+                $calculated_total += (float) $item_line_total * (int) $item->get_quantity();
+            }
+
+            if ( (float) $item_line_total < 0 ) {
+                $negative_item_amount = true;
+            }
+        }
+
+        $mismatched_totals = $this->number_format(
+            (float) $calculated_total + (float) $order->get_total_tax() + (float) $this->round( $order->get_shipping_total(), $order ) - (float) $this->round( $order->get_total_discount(), $order ),
+            $order
+        ) !== $this->number_format( $order->get_total(), $order );
+
+        return ! $negative_item_amount && ! $mismatched_totals;
+    }
+
+    /**
+     * Force one PayPal cart line when totals cannot be expressed as line items + tax + shipping − discount (e.g. coupons, rounding).
+     * Matches WooCommerce core: {@see WC_Gateway_Paypal_Request::get_paypal_args()}.
+     *
+     * @param WC_Order $order Order.
+     * @return bool
+     */
+    protected function should_force_single_line_item( $order ) {
+        $force = apply_filters( 'woocommerce_paypal_force_one_line_item', false, $order );
+        if ( $force ) {
+            return true;
+        }
+        if ( function_exists( 'wc_tax_enabled' ) && wc_tax_enabled() && function_exists( 'wc_prices_include_tax' ) && wc_prices_include_tax() ) {
+            return true;
+        }
+        return ! $this->line_items_valid( $order );
+    }
+
+    /**
+     * Comma-separated product names for consolidated PayPal line (WC parity).
+     *
+     * @param WC_Order $order Order.
+     * @return string
+     */
+    protected function get_order_item_names( $order ) {
+        $item_names = array();
+
+        foreach ( $order->get_items() as $item ) {
+            $item_name = $item->get_name();
+            $item_meta = '';
+            if ( function_exists( 'wc_display_item_meta' ) ) {
+                $item_meta = wp_strip_all_tags(
+                    wc_display_item_meta(
+                        $item,
+                        array(
+                            'before'    => '',
+                            'separator' => ', ',
+                            'after'     => '',
+                            'echo'      => false,
+                            'autop'     => false,
+                        )
+                    )
+                );
+            }
+
+            if ( $item_meta ) {
+                $item_name .= ' (' . $item_meta . ')';
+            }
+
+            $item_names[] = $item_name . ' x ' . $item->get_quantity();
+        }
+
+        return apply_filters( 'woocommerce_paypal_get_order_item_names', implode( ', ', $item_names ), $order );
+    }
+
+    /**
+     * Single consolidated cart (no tax_cart / discount_amount_cart): matches WC_Gateway_Paypal_Request::get_line_item_args_single_item().
+     *
+     * @param WC_Order $order           Order.
+     * @param bool     $use_generic_name Use gateway generic label instead of product list.
+     * @return array PayPal args fragment (item_name_*, quantity_*, amount_*, optional shipping_1 or second line).
+     */
+    protected function get_consolidated_paypal_line_items( $order, $use_generic_name ) {
+        $out = array();
+
+        if ( $use_generic_name ) {
+            $item_name = $this->get_generic_paypal_item_name( $order );
+        } else {
+            $names = $this->get_order_item_names( $order );
+            $item_name = $names ? $names : sprintf( __( 'Order %s', 'classic-paypal-standard-wc' ), $order->get_order_number() );
+        }
+
+        $out['item_name_1']  = $this->limit_length( html_entity_decode( wp_strip_all_tags( $item_name ), ENT_NOQUOTES, 'UTF-8' ), 127 );
+        $out['quantity_1']   = 1;
+        $out['amount_1']     = $this->number_format(
+            (float) $order->get_total() - (float) $this->round( (float) $order->get_shipping_total() + (float) $order->get_shipping_tax(), $order ),
+            $order
+        );
+
+        $shipping_total = (float) $order->get_shipping_total() + (float) $order->get_shipping_tax();
+
+        if ( $order->get_shipping_total() > 0 && $order->get_shipping_total() < 999.99
+            && $this->number_format( (float) $order->get_shipping_total() + (float) $order->get_shipping_tax(), $order ) !== $this->number_format( $order->get_total(), $order ) ) {
+            $out['shipping_1'] = $this->number_format( $shipping_total, $order );
+        } elseif ( $order->get_shipping_total() > 0 ) {
+            /* translators: %s: shipping method title */
+            $out['item_name_2'] = sprintf( __( 'Shipping via %s', 'woocommerce' ), $order->get_shipping_method() );
+            $out['quantity_2']  = 1;
+            $out['amount_2']    = $this->number_format( $shipping_total, $order );
+        }
+
+        return $out;
+    }
+
+    /**
      * Get the PayPal request URL for an order.
      *
      * @param  WC_Order $order Order object.
@@ -81,40 +225,42 @@ class cpsw_Gateway_PayPal_Standard_Request {
 
         $this->line_items = array();
 
-        $use_generic_line = 'yes' === $this->gateway->get_option( 'paypal_generic_line_item', 'no' );
+        $use_generic_line   = 'yes' === $this->gateway->get_option( 'paypal_generic_line_item', 'no' );
+        $force_single_line  = $use_generic_line || $this->should_force_single_line_item( $order );
 
         $paypal_args = $this->get_transaction_args( $order );
 
         if ( $use_generic_line ) {
             unset( $paypal_args['item_name'] );
+        }
+
+        if ( $force_single_line ) {
+            // One cart line (plus optional shipping line): totals already include tax and coupon — do not send tax_cart or discount_amount_cart.
+            $paypal_args = array_merge( $paypal_args, $this->get_consolidated_paypal_line_items( $order, $use_generic_line ) );
+            $this->line_items = array( 1 );
+            cpsw_Gateway_PayPal_Standard::log( 'PayPal cart: consolidated line item(s) (generic or line-item validation / prices include tax).' );
         } else {
             $paypal_args = $this->add_line_items( $paypal_args, $order );
+            $paypal_args = $this->add_shipping( $paypal_args, $order );
+
+            if ( $order->get_total_tax() > 0 ) {
+                $paypal_args['tax_cart'] = $this->number_format( $order->get_total_tax(), $order );
+            }
+
+            if ( $order->get_total_discount() > 0 ) {
+                $paypal_args['discount_amount_cart'] = $this->number_format( $this->round( $order->get_total_discount(), $order ), $order );
+            }
+
+            if ( empty( $this->line_items ) ) {
+                $paypal_args['item_name_1'] = sprintf( __( 'Order %s', 'classic-paypal-standard-wc' ), $order->get_order_number() );
+                $paypal_args['quantity_1'] = 1;
+                $paypal_args['amount_1']   = $this->number_format( $order->get_total() - $order->get_shipping_total() - $order->get_total_tax(), $order );
+                cpsw_Gateway_PayPal_Standard::log( 'Adding single line item with total amount: ' . $paypal_args['amount_1'] );
+            }
         }
 
-        $paypal_args = $this->add_shipping( $paypal_args, $order );
-
-        // Add tax
-        if ( $order->get_total_tax() > 0 ) {
-            $paypal_args['tax_cart'] = $this->number_format( $order->get_total_tax(), $order );
-        }
-
-        // Add discount
-        if ( $order->get_total_discount() > 0 ) {
-            $paypal_args['discount_amount_cart'] = $this->number_format( $order->get_total_discount(), $order );
-        }
-
-        if ( $use_generic_line ) {
-            $paypal_args['item_name_1']  = $this->get_generic_paypal_item_name( $order );
-            $paypal_args['quantity_1']  = 1;
-            $paypal_args['amount_1']    = $this->number_format( $order->get_total() - $order->get_shipping_total() - $order->get_total_tax(), $order );
-            cpsw_Gateway_PayPal_Standard::log( 'Generic PayPal line item enabled; amount_1: ' . $paypal_args['amount_1'] );
-        } elseif ( empty( $this->line_items ) ) {
-            // If no line items were added, add the full amount as a single item to prevent AMOUNT_MISSING error
-            $paypal_args['item_name_1'] = sprintf( __( 'Order %s', 'classic-paypal-standard-wc' ), $order->get_order_number() );
-            $paypal_args['quantity_1'] = 1;
-            $paypal_args['amount_1'] = $this->number_format( $order->get_total() - $order->get_shipping_total() - $order->get_total_tax(), $order );
-
-            cpsw_Gateway_PayPal_Standard::log( 'Adding single line item with total amount: ' . $paypal_args['amount_1'] );
+        if ( isset( $paypal_args['item_name_1'] ) ) {
+            unset( $paypal_args['item_name'] );
         }
         
         // Add custom data
@@ -369,12 +515,12 @@ class cpsw_Gateway_PayPal_Standard_Request {
         foreach ( $order->get_items( array( 'line_item', 'fee' ) ) as $item ) {
             if ( 'fee' === $item->get_type() ) {
                 // Process fee items
-                $paypal_args = $this->add_line_item( 
-                    $paypal_args, 
-                    $item->get_name(), 
-                    1, 
-                    $this->number_format( $item->get_total(), $order ), 
-                    $count 
+                $paypal_args = $this->add_line_item(
+                    $paypal_args,
+                    $item->get_name(),
+                    1,
+                    $this->number_format( $item->get_total(), $order ),
+                    $count
                 );
                 $this->line_items[] = $count; // Track that we added this line item
                 $count++;
@@ -384,17 +530,11 @@ class cpsw_Gateway_PayPal_Standard_Request {
                     $product = $item->get_product();
                     
                     if ( $product ) {
-                        $item_line_total = $order->get_line_subtotal( $item, false, false );
-                        
-                        // Check if the line total is zero
-                        if ( 0 === $item_line_total ) {
-                            continue; // Skip zero amount line items
+                        // Per-unit price rounded like WC_Gateway_Paypal_Request::prepare_line_items (avoids qty × unit ≠ line subtotal).
+                        $item_unit_price = (float) $order->get_item_subtotal( $item, false );
+                        if ( ! $item_unit_price ) {
+                            continue;
                         }
-                        
-                        // Divide by quantity to get the unit price
-                        $item_unit_price = $item_line_total / $item->get_quantity();
-                        
-                        // Format the unit price
                         $item_unit_price_formatted = $this->number_format( $item_unit_price, $order );
                         
                         // Get product SKU

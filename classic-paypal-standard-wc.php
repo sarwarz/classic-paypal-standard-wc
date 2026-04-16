@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Classic PayPal Standard for WooCommerce
  * Description: PayPal Standard payment gateway for WooCommerce (classic hosted checkout).
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: sarwarzahan
  * Author URI: https://sarwarzahan.com
  * Plugin URI: https://github.com/sarwarz/classic-paypal-standard-wc
@@ -22,7 +22,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin constants
-define( 'CPSW_VERSION', '1.0.0' );
+define( 'CPSW_VERSION', '1.0.1' );
 define( 'CPSW_PLUGIN_FILE', __FILE__ );
 define( 'CPSW_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CPSW_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
